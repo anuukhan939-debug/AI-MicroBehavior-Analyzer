@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-7">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <i class="fas fa-hand-peace fa-3x mb-2"></i>
+                    <h3 class="mb-0">User Consent Required</h3>
+                    <p class="mb-0 mt-1">Please give your consent to continue</p>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Notice:</strong>The AI Micro-Behavior Analyzer system captures your video 
+                        and analyzes your facial expressions. This data is used only for educational/monitoring 
+                        purposes.
+                    </div>
+
+                    <!-- Consent Details -->
+                    <h5><i class="fas fa-info-circle text-primary"></i> What will be done?</h5>
+                    <ul class="mb-3">
+                        <li>Your real-time video will be captured from the webcam</li>
+                        <li>Emotions will be detected from your face (Happy, Sad, Angry, etc.)</li>
+                        <li>Your attention and focus level will be analyzed</li>
+                        <li>This data will be shown on the admin dashboard</li>
+                    </ul>
+
+                    <h5><i class="fas fa-shield-alt text-success"></i> Privacy & Security</h5>
+                    <ul class="mb-3">
+                        <li>Data is stored securely</li>
+                        <li>Only authorized admin users can view it</li>
+                        <li>Not shared with any third-party</li>
+                        <li>You can request to delete your data at any time</li>
+                        <li>GDPR compliant - your rights are protected</li>
+                    </ul>
+
+                    <h5><i class="fas fa-user-check text-info"></i> Aapke Rights</h5>
+                    <ul class="mb-4">
+                           <li>Right to withdraw consent - you can revoke it anytime</li>
+                        <li>Right to view your data</li>
+                        <li>Right to request data deletion</li>
+                        <li>No analysis without your consent</li>
+                    </ul>
+
+                    <div class="alert alert-secondary">
+                        <i class="fas fa-clock"></i> 
+                        <strong>Duration:</strong> This consent will remain valid until you revoke it.
+                    </div>
+
+                    <form method="post" action="{% url 'core:consent' %}">
+                        {% csrf_token %}
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="consentCheckbox" required>
+                            <label class="form-check-label" for="consentCheckbox">
+                                <strong>I give my consent</strong> for my video to be captured, 
+                                my behavior to be analyzed, and this data to be stored in the system. 
+                                I have read and agree to the privacy policy and terms of use.
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="emailUpdates">
+                            <label class="form-check-label" for="emailUpdates">
+                                I would like to receive email updates and session reports
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'core:logout' %}" class="btn btn-danger me-md-2">
+                                <i class="fas fa-times"></i> No, I do not consent
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="consentBtn" disabled>
+                                <i class="fas fa-check-circle"></i> Yes, I Give Consent
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3 text-muted">
+                <small>Questions? Contact admin at support@aimicrobehavior.com</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const consentCheckbox = document.getElementById('consentCheckbox');
+    const consentBtn = document.getElementById('consentBtn');
+    
+    consentCheckbox.addEventListener('change', function() {
+        consentBtn.disabled = !this.checked;
+    });
+    form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (consentCheckbox.checked) {
+                alert('✅ Consent given successfully! Proceeding to dashboard...');
+                // Here you can redirect or submit
+            } else {
+                alert('Please check the consent box first.');
+            }
+            });
+</script>
+{% endblock %}

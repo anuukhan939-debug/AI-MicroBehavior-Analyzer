@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-video"></i> Live Analysis - {{ session.user.get_full_name }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="webcam-container">
+                        <video id="videoElement" autoplay playsinline></video>
+                        <canvas id="canvasElement" style="display: none;"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <button id="stopSession" class="btn btn-danger">
+                            <i class="fas fa-stop"></i> End Session
+                        </button>
+                        <span id="sessionTimer" class="ms-3 badge bg-info">00:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Real-time Metrics -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> Real-time Metrics
+                </div>
+                <div class="card-body">
+                    <div id="focusSection" class="text-center mb-3">
+                        <h6 id="focusLabel">🎯 Attention Score</h6>
+                        <div id="attentionScore" class="attention-score attention-good">0%</div>
+                        <div class="progress mt-2" style="height: 10px;">
+                            <div id="attentionBar" class="progress-bar bg-success" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <!-- <div class="text-center mb-3">
+                        <h6>Attention Score</h6>
+                        <div id="attentionScore" class="attention-score attention-good">0%</div>
+                        <div class="progress mt-2" style="height: 10px;">
+                            <div id="attentionBar" class="progress-bar bg-success" style="width: 0%"></div>
+                        </div>
+                    </div> -->
+                    <div id="emotionSection" class="text-center mb-3">
+                        <h6 id="emotionLabel">😊 Current Emotion</h6>
+                        <div id="emotionDisplay" class="emotion-badge emotion-neutral">Neutral</div>
+                        <div class="small text-muted mt-1">Confidence: <span id="emotionConfidence">0</span>%</div>
+                    </div>
+                    <!-- <div class="text-center mb-3">
+                        <h6>Current Emotion</h6>
+                        <div id="emotionDisplay" class="emotion-badge emotion-neutral">Neutral</div>
+                        <div class="small text-muted mt-1">Confidence: <span id="emotionConfidence">0</span>%</div>
+                    </div> -->
+                    
+                    <div class="text-center">
+                        <h6>Engagement Score</h6>
+                        <div id="engagementScore" class="h3">0%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Focus Indicators -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-eye"></i> Focus Indicators
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <i class="fas fa-arrow-right"></i> Gaze: <span id="gazeDirection">Detecting...</span>
+                    </div>
+                    <div class="mb-2">
+                        <i class="fas fa-arrow-up"></i> Head Pose: 
+                        <span id="headPose">P:0° Y:0° R:0°</span>
+                    </div>
+                    <div>
+                        <i class="fas fa-check-circle"></i> Status: 
+                        <span id="focusStatus" class="badge bg-success">Focused</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+//    vedio conva contxt
+    const vid = document.getElementById('videoElement');
+    const can = document.getElementById('canvasElement');
+    const ctx= can.getContext('2d');
+    let stream = null;
+    let sessionId = '{{ session.id }}';
+    let analysisInterval = null;
+    let startTime = Date.now();
+    //  ✅ CSRF TOKEN GET KARNE KA FUNCTION
+    function getCSRFToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // CSRF token cookie find karo
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    // Start webcam
+    async function startWebcam() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            vid.srcObject = stream;
+            await vid.play();
+            
+            // Set canvas size to match video
+            can.width = vid.videoWidth;
+            can.height = vid.videoHeight;
+            
+            // Start analysis loop
+            startAnalysis();
+            startTimer();
+        } catch (error) {
+            console.error('Webcam error:', error);
+            alert('Could not access webcam. Please check permissions.');
+        }
+    }
+    
+    // Send frame for analysis
+    async function analyzeFrame() {
+        if (vid.videoWidth === 0) return;
+        
+        can.width = vid.videoWidth;
+        can.height = vid.videoHeight;
+        ctx.drawImage(vid, 0, 0, can.width, can.height);
+        
+        const imageData = can.toDataURL('image/jpeg', 0.8);
+             
+            // ✅ CSRF TOKEN WITH FETCH
+            try {
+            const response = await fetch('/api/analyze-frame/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()  // ✅ YEH ADD KARO
+                },
+                body: JSON.stringify({
+                    image: imageData,
+                    session_id: sessionId
+                })
+            });
+
+            // ✅ Check karo response sahi hai ya nahi
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server error:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const data = await response.json();
+            
+            if (data.success) {
+                updateUI(data);
+            }
+        }catch (error) {
+            console.error('Analysis error:', error);
+        }
+    }
+
+    
+    function updateUI(data) {
+        // Update attention score
+        const attention = Math.round(data.attention_score);
+        document.getElementById('attentionScore').textContent = attention + '%';
+        document.getElementById('attentionBar').style.width = attention + '%';
+        
+        // Update color based on score
+        const attentionElement = document.getElementById('attentionScore');
+        attentionElement.className = 'attention-score';
+        if (attention >= 70) attentionElement.classList.add('attention-good');
+        else if (attention >= 40) attentionElement.classList.add('attention-medium');
+        else attentionElement.classList.add('attention-poor');
+        
+        // Update emotion
+        const emotion = data.emotion;
+        const emotionElement = document.getElementById('emotionDisplay');
+        emotionElement.textContent = emotion.charAt(0).toUpperCase() + emotion.slice(1);
+        emotionElement.className = `emotion-badge emotion-${emotion}`;
+        
+        document.getElementById('emotionConfidence').textContent = Math.round(data.emotion_confidence * 100);
+        document.getElementById('engagementScore').textContent = Math.round(data.engagement_score) + '%';
+        document.getElementById('gazeDirection').textContent = data.gaze_direction;
+        document.getElementById('headPose').textContent = `P:${Math.round(data.head_pose.pitch)}° Y:${Math.round(data.head_pose.yaw)}° R:${Math.round(data.head_pose.roll)}°`;
+        
+        const focusStatus = document.getElementById('focusStatus');
+        if (data.is_focused) {
+            focusStatus.textContent = 'Focused';
+            focusStatus.className = 'badge bg-success';
+        } else {
+            focusStatus.textContent = 'Distracted';
+            focusStatus.className = 'badge bg-danger';
+        }
+        
+        // Show alerts if any
+        if (data.alerts && data.alerts.length > 0) {
+            data.alerts.forEach(alert => {
+                showToast(alert.message, alert.priority);
+            });
+        }
+    }
+    
+    function showToast(message, priority) {
+        const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${priority === 'high' ? 'danger' : 'warning'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        toastContainer.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    }
+    
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.position = 'fixed';
+        container.style.bottom = '20px';
+        container.style.right = '20px';
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+        return container;
+    }
+    
+    function startAnalysis() {
+        analysisInterval = setInterval(analyzeFrame, 1000);
+    }
+    
+    function startTimer() {
+        const timerInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('sessionTimer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
+        
+        window.stopTimer = () => clearInterval(timerInterval);
+    }
+    
+    // End session
+    document.getElementById('stopSession').addEventListener('click', async () => {
+        if (analysisInterval) clearInterval(analysisInterval);
+        if (window.stopTimer) window.stopTimer();
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        
+        window.location.href = `/session/end/${sessionId}/`;
+    });
+    
+    // Start everything
+    startWebcam();
+     
+
+    // ============================================
+    // 🟢 ANALYSIS MODE KE HISAAB SE UI HIDE/SHOW
+    // ============================================
+    const mode = "{{ session.analysis_mode }}";
+
+    if (mode === 'focus') {
+        // Emotion section hide karo
+        const emotionSection = document.getElementById('emotionSection');
+        if (emotionSection) {
+            emotionSection.style.display = 'none';
+        }
+        // Label change karo (optional)
+        const focusLabel = document.getElementById('focusLabel');
+        if (focusLabel) {
+            focusLabel.innerText = '👁️ Focus Score (Only)';
+        }
+    } else if (mode === 'emotion') {
+        // Focus section hide karo
+        const focusSection = document.getElementById('focusSection');
+        if (focusSection) {
+            focusSection.style.display = 'none';
+        }
+        // Label change karo (optional)
+        const emotionLabel = document.getElementById('emotionLabel');
+        if (emotionLabel) {
+            emotionLabel.innerText = '😊 Emotion (Only)';
+        }
+    } else {
+        // Mode 'both' hai — sab dikhega (default)
+        console.log('🔬 Full Analysis Mode (Focus + Emotion)');
+    }
+</script>
+{% endblock %}

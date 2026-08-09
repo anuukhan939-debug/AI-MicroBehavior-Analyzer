@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <i class="fas fa-chart-bar fa-3x mb-2"></i>
+                    <h3 class="mb-0">Generate Report</h3>
+                    <p class="mb-0 mt-1">Custom report banayein aur analysis karein</p>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <form method="post" action="{% url 'core:generate_report' %}">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-file-alt"></i> Report Type
+                                </label>
+                                <select class="form-select" name="report_type" id="reportType" required>
+                                    <option value="session">Session Report (Kisi ek session ki detail)</option>
+                                    <option value="daily" selected>Daily Report (Ek din ka summary)</option>
+                                    <option value="weekly">Weekly Report (Haftay ka summary)</option>
+                                    <option value="monthly">Monthly Report (Mahinay ka summary)</option>
+                                    <option value="custom">Custom Date Range</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-user"></i> Select User
+                                </label>
+                                <select class="form-select" name="user_id">
+                                    <option value="all">All Users (Overall Summary)</option>
+                                    {% for u in users %}
+                                    <option value="{{ u.id }}">{{ u.get_full_name|default:u.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Session Specific (hidden by default) -->
+                        <div class="row" id="sessionField" style="display: none;">
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-history"></i> Select Session
+                                </label>
+                                <select class="form-select" name="session_id">
+                                    <option value="">-- Select Session --</option>
+                                    <!-- Sessions will be loaded via JS -->
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row" id="dateRangeFields">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-calendar-alt"></i> Start Date
+                                </label>
+                                <input type="date" class="form-control" name="start_date" id="startDate" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-calendar-check"></i> End Date
+                                </label>
+                                <input type="date" class="form-control" name="end_date" id="endDate" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Report Options -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-sliders-h"></i> Report Options
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="include_charts" id="includeCharts" checked>
+                                            <label class="form-check-label" for="includeCharts">
+                                                Include Charts (Graphs)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="include_raw_data" id="includeRawData">
+                                            <label class="form-check-label" for="includeRawData">
+                                                Include Raw Data
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="include_recommendations" id="includeRecommendations" checked>
+                                            <label class="form-check-label" for="includeRecommendations">
+                                                Include Recommendations
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Report Format</label>
+                                        <select class="form-select" name="format">
+                                            <option value="pdf">PDF Document</option>
+                                            <option value="csv">CSV (Excel)</option>
+                                            <option value="json">JSON (Raw Data)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Chart Style</label>
+                                        <select class="form-select" name="chart_style">
+                                            <option value="line">Line Chart</option>
+                                            <option value="bar">Bar Chart</option>
+                                            <option value="pie">Pie Chart</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Time Zone</label>
+                                        <select class="form-select" name="timezone">
+                                            <option value="PKT">Pakistan Time (PKT)</option>
+                                            <option value="UTC">UTC</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Report Preview:</strong> Total sessions, average focus, emotion distribution, aur user performance
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'core:dashboard' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-download"></i> Generate Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Recent Reports -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <i class="fas fa-clock"></i> Recently Generated Reports
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr><th>Date</th><th>Type</th><th>Format</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="recentReportsList">
+                                <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+    document.getElementById('startDate').value = weekAgo;
+    document.getElementById('endDate').value = today;
+    
+    // Toggle session field based on report type
+    const reportType = document.getElementById('reportType');
+    const sessionField = document.getElementById('sessionField');
+    const dateRangeFields = document.getElementById('dateRangeFields');
+    
+    reportType.addEventListener('change', function() {
+        if (this.value === 'session') {
+            sessionField.style.display = 'flex';
+            dateRangeFields.style.display = 'none';
+            loadUserSessions();
+        } else {
+            sessionField.style.display = 'none';
+            dateRangeFields.style.display = 'flex';
+        }
+    });
+    
+    function loadUserSessions() {
+        const userId = document.querySelector('[name="user_id"]').value;
+        if (userId && userId !== 'all') {
+            fetch(`/api/user-sessions/${userId}/`)
+                .then(res => res.json())
+                .then(data => {
+                    const select = document.querySelector('[name="session_id"]');
+                    select.innerHTML = '<option value="">-- Select Session --</option>';
+                    data.sessions.forEach(session => {
+                        select.innerHTML += `<option value="${session.id}">${session.date} - ${session.duration} min</option>`;
+                    });
+                });
+        }
+    }
+    
+    document.querySelector('[name="user_id"]').addEventListener('change', loadUserSessions);
+    
+    // Load recent reports
+    fetch('/api/recent-reports/')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('recentReportsList');
+            if (data.reports && data.reports.length) {
+                tbody.innerHTML = data.reports.map(r => `
+                    <tr>
+                        <td>${r.date}</td>
+                        <td>${r.type}</td>
+                        <td>${r.format}</td>
+                        <td><a href="/reports/download/${r.id}/" class="btn btn-sm btn-success">Download</a></td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No reports yet</td></tr>';
+            }
+        });
+</script>
+{% endblock %}
