@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-history"></i> My Sessions</h4>
+                </div>
+                <div class="card-body">
+                    {% if sessions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Session ID</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                        <th>Duration</th>
+                                        <th>Avg Focus</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in sessions %}
+                                    <tr>
+                                        <td><small>{{ session.id|truncatechars:8 }}</small></td>
+                                        <td>{{ session.start_time|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            {% if session.end_time %}
+                                                {{ session.end_time|date:"M d, Y H:i" }}
+                                            {% else %}
+                                                <span class="badge bg-warning">In Progress</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if session.end_time %}
+                                                {{ session.duration_minutes }} min
+                                            {% else %}
+                                                <span class="badge bg-warning">In Progress</span>
+                                            {% endif %}
+                                        </td>
+                                        <!-- <td>{{ session.duration|floatformat:0 }} min</td> -->
+                                        <td>
+                                            {% with avg_focus=session.focus_records.all|dictsort:"attention_score" %}
+                                                {% if session.focus_records.all %}
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar {% if session.avg_attention > 70 %}bg-success{% elif session.avg_attention > 40 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                             style="width: {{ session.avg_attention|default:0 }}%">
+                                                            {{ session.avg_attention|floatformat:0 }}%
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>
+                                            {% if session.status == 'active' %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Completed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'core:session_detail' session.id %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-chart-line"></i> Details
+                                            </a>
+                                            {% if session.status == 'active' %}
+                                                <a href="{% url 'core:realtime_analysis' session.id %}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-eye"></i> Monitor
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No sessions found yet.</p>
+                            <a href="{% url 'core:start_session' %}" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Start Your First Session
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

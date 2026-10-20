@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">Welcome back, {{ user.get_full_name|default:user.username }}!</h2>
+                            <p class="mt-2 mb-0 opacity-75">Track your focus and emotional well-being</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-smile-wink fa-3x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #4a90e2, #357abd);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-2">Total Sessions</h6>
+                            <h2 class="text-white mb-0">{{ stats.total_sessions }}</h2>
+                        </div>
+                        <i class="fas fa-chalkboard fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-2">Total Learning Time</h6>
+                            <h2 class="text-white mb-0">{{ stats.total_time|floatformat:1 }}h</h2>
+                        </div>
+                        <i class="fas fa-clock fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-2">Average Focus</h6>
+                            <h2 class="text-white mb-0">{{ stats.avg_attention|floatformat:1 }}%</h2>
+                        </div>
+                        <i class="fas fa-eye fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <a href="{% url 'core:start_session' %}" class="btn btn-primary w-100 py-3">
+                                <i class="fas fa-play-circle fa-2x d-block mb-2"></i>
+                                Start New Session
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <!-- View Session History button temporarily disabled -->
+                             <a href="{% url 'core:sessions_view' %}" class="btn btn-gradient-success w-100 py-3">
+                                <i class="fas fa-history fa-2x d-block mb-2"></i>
+                                View Session History
+                            </a>
+                            <!-- <div class="btn btn-outline-secondary w-100 py-3 disabled">
+                                <i class="fas fa-history fa-2x d-block mb-2"></i>
+                                View Session History
+                            </div> -->
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <button class="btn btn-gradient-warning w-100 py-3" data-bs-toggle="modal" data-bs-target="#tipsModal">
+                                <i class="fas fa-lightbulb fa-2x d-block mb-2"></i>
+                                Get Focus Tips
+                            </button>
+                            <!-- <button class="btn btn-outline-success w-100 py-3" data-bs-toggle="modal" data-bs-target="#tipsModal">
+                                <i class="fas fa-lightbulb fa-2x d-block mb-2"></i>
+                                Get Focus Tips
+                            </button> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Sessions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-history"></i> Recent Sessions
+                    </div>
+                    <!-- View All link temporarily disabled -->
+                    <span class="btn btn-sm btn-link disabled text-muted">View All <i class="fas fa-arrow-right"></i></span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Duration</th>
+                                    <th>Domain</th>
+                                    <th>Avg Focus</th>
+                                    <th>Dominant Emotion</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for session in recent_sessions %}
+                                <tr>
+                                    <td>{{ session.start_time|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if session.end_time %}
+                                            {{ session.duration|floatformat:0 }} min
+                                        {% else %}
+                                            <span class="badge bg-success">In Progress</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ session.domain|title }}</td>
+                                    <td>
+                                        {% with avg_focus=session.focus_records.all|dictsort:"attention_score" %}
+                                            {% if session.focus_records.all %}
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar {% if session.avg_attention > 70 %}bg-success{% elif session.avg_attention > 40 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                         style="width: {{ session.avg_attention|default:0 }}%">
+                                                        {{ session.avg_attention|floatformat:0 }}%
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">No data</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% with emotions=session.emotions.all %}
+                                            {% if emotions %}
+                                                {% for emotion in emotions|slice:":1" %}
+                                                    <span class="emotion-badge emotion-{{ emotion.emotion }}">
+                                                        {{ emotion.emotion|title }}
+                                                    </span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% if session.status == 'active' %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Completed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'core:session_detail' session.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-chart-line"></i> Details
+                                        </a>
+                                        {% if session.status == 'active' %}
+                                            <a href="{% url 'core:realtime_analysis' session.id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> Monitor
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="fas fa-chalkboard fa-3x text-muted mb-3 d-block"></i>
+                                        <p class="text-muted mb-0">No sessions yet. Start your first session!</p>
+                                        <a href="{% url 'core:start_session' %}" class="btn btn-primary mt-3">
+                                            <i class="fas fa-play"></i> Start Your First Session
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Performance Chart -->
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> Your Weekly Performance
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie"></i> Emotion Summary
+                </div>
+                <div class="card-body">
+                    <canvas id="emotionSummaryChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips and Recommendations -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-header bg-transparent">
+                    <i class="fas fa-tasks"></i> Recommendations for Better Focus
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-coffee fa-2x text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6>Take Regular Breaks</h6>
+                                    <p class="small text-muted">Follow the 50/10 rule: 50 minutes study, 10 minutes break</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-sun fa-2x text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6>Good Lighting</h6>
+                                    <p class="small text-muted">Ensure your face is well-lit for accurate analysis</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-headphones fa-2x text-success"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6>Minimize Distractions</h6>
+                                    <p class="small text-muted">Find a quiet environment for better concentration</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tips Modal -->
+<div class="modal fade" id="tipsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-lightbulb"></i> Focus Enhancement Tips</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Maintain eye contact with the camera
+                    </div>
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Sit upright with good posture
+                    </div>
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Take deep breaths when feeling distracted
+                    </div>
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Set specific goals for each session
+                    </div>
+                    <div class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Review your performance after each session
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ============================================
+// 1. WEEKLY PERFORMANCE CHART (Dynamic)
+// ============================================
+const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+
+// Context se data lo (Jo humne views.py mein bheja hai)
+const weeklyData = JSON.parse('{{ weekly_chart_data|safe }}');
+const totalFocus = weeklyData.reduce((sum, d) => sum + d.focus, 0);
+
+// Agar koi data nahi hai (saare 0 hain)
+if (totalFocus === 0) {
+    // Chart ko hide karo aur "No Data" dikhao
+    const parent = document.getElementById('weeklyChart').parentElement;
+    parent.innerHTML = `
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-chart-line fa-3x mb-3 d-block"></i>
+            <p>📊 No sessions completed this week.</p>
+            <small>Start a session to see your performance here.</small>
+        </div>
+    `;
+} else {
+    // Data ready hai, chart render karo
+    const labels = weeklyData.map(d => d.day);
+    const focusData = weeklyData.map(d => d.focus);
+    const engagementData = weeklyData.map(d => d.engagement);
+
+    new Chart(weeklyCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Focus Score (%)',
+                data: focusData,
+                borderColor: '#4a90e2',
+                backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#4a90e2',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }, {
+                label: 'Engagement Score (%)',
+                data: engagementData,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#28a745',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: { display: true, text: 'Score (%)' },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    title: { display: true, text: 'Day of Week' },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+// ============================================
+// 2. EMOTION SUMMARY CHART (Dynamic)
+// ============================================
+const emotionCtx = document.getElementById('emotionSummaryChart').getContext('2d');
+const hasEmotionData = {{ has_emotion_data|yesno:"true,false" }};
+
+if (!hasEmotionData) {
+    // No Emotion Data - Fallback show karo
+    const parent = document.getElementById('emotionSummaryChart').parentElement;
+    parent.innerHTML = `
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-face-smile fa-3x mb-3 d-block"></i>
+            <p>😊 No emotion data yet.</p>
+            <small>Complete sessions to track your emotions.</small>
+        </div>
+    `;
+} else {
+    // Data hai, chart banao
+    const labels = JSON.parse('{{ emotion_labels|safe }}');
+    const data = JSON.parse('{{ emotion_values|safe }}');
+    const backgroundColors = ['#ffd93d', '#b2bec3', '#a29bfe', '#6c5ce7', '#ff7675', '#fd79a8', '#dfe6e9'];
+
+    new Chart(emotionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 10 } }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+    // Animate numbers on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const statNumbers = document.querySelectorAll('.stat-card h2');
+        statNumbers.forEach(el => {
+            const finalValue = parseInt(el.innerText);
+            if (!isNaN(finalValue)) {
+                let current = 0;
+                const increment = finalValue / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= finalValue) {
+                        el.innerText = finalValue;
+                        clearInterval(timer);
+                    } else {
+                        if (el.innerText.includes('h')) {
+                            el.innerText = current.toFixed(1) + 'h';
+                        } else if (el.innerText.includes('%')) {
+                            el.innerText = Math.floor(current) + '%';
+                        } else {
+                            el.innerText = Math.floor(current);
+                        }
+                    }
+                }, 20);
+            }
+        });
+    });
+</script>
+{% endblock %}

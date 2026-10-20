@@ -1,0 +1,657 @@
+ {% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-server"></i> System Administrator Dashboard</h2>
+        <div>
+            <button class="btn btn-success me-2" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#backupModal">
+                <i class="fas fa-database"></i> Backup Database
+            </button>
+        </div>
+    </div>
+
+    <!-- System Health Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ system_stats.total_users }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Sessions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ system_stats.active_sessions }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-video fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                API Calls Today
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ system_stats.api_calls_today }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Avg Response Time
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ system_stats.avg_response_time }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row - More Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-chart-line"></i> System Performance
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-database"></i> Database Statistics
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Sessions</td>
+                                <td class="text-end"><strong>{{ db_stats.sessions }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Emotion Records</td>
+                                <td class="text-end"><strong>{{ db_stats.emotion_records }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Focus Records</td>
+                                <td class="text-end"><strong>{{ db_stats.focus_records }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Alerts Generated</td>
+                                <td class="text-end"><strong>{{ db_stats.alerts }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Reports</td>
+                                <td class="text-end"><strong>{{ db_stats.reports }}</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-microchip"></i> System Resources
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="small text-muted">CPU Usage</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" style="width: 45%">45%</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted">Memory Usage</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: 62%">62%</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted">Storage</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" style="width: {{ system_stats.storage_used_percent|default:'28' }}%">{{ system_stats.storage_used }}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="small text-muted">GPU Usage</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-danger" style="width: 35%">35%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Configuration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-cog"></i> System Configuration
+                    </div>
+                    <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#editConfigModal">
+                        <i class="fas fa-edit"></i> Edit Configuration
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Configuration Key</th>
+                                    <th>Current Value</th>
+                                    <th>Description</th>
+                                    <th>Last Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for config in configs %}
+                                <tr>
+                                    <td><code>{{ config.key }}</code></td>
+                                    <td>{{ config.value }}</td>
+                                    <td>{{ config.description|default:"-" }}</td>
+                                    <td>{{ config.updated_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No configurations found</td>
+                                </tr>
+                                {% endfor %}
+                                <!-- Default configurations -->
+                                <tr>
+                                    <td><code>attention_threshold</code></td>
+                                    <td>70</td>
+                                    <td>Minimum attention score for focused status (%)</td>
+                                    <td>{{ now|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><code>alert_cooldown_seconds</code></td>
+                                    <td>30</td>
+                                    <td>Cooldown period between same-type alerts</td>
+                                    <td>{{ now|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><code>max_concurrent_sessions</code></td>
+                                    <td>50</td>
+                                    <td>Maximum concurrent sessions per server</td>
+                                    <td>{{ now|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><code>frame_processing_interval</code></td>
+                                    <td>1.0</td>
+                                    <td>Time between frame analyses (seconds)</td>
+                                    <td>{{ now|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent System Logs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-terminal"></i> Recent System Logs
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-light me-2" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i> Clear Logs
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" onclick="downloadLogs()">
+                            <i class="fas fa-download"></i> Export Logs
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td class="text-nowrap">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                                    <td>{{ log.user.username|default:"System" }}</td>
+                                    <td>
+                                        <span class="badge {% if 'error' in log.action|lower %}bg-danger{% elif 'login' in log.action|lower %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ log.action }}
+                                        </span>
+                                    </td>
+                                    <td>{{ log.details|truncatechars:80 }}</td>
+                                    <td>{{ log.ip_address|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">No logs available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Status and Actions -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <i class="fas fa-shield-alt"></i> System Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-danger" onclick="clearCache()">
+                            <i class="fas fa-broom"></i> Clear System Cache
+                        </button>
+                        <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#restartModal">
+                            <i class="fas fa-sync-alt"></i> Restart AI Services
+                        </button>
+                        <button class="btn btn-outline-info" onclick="runDiagnostics()">
+                            <i class="fas fa-stethoscope"></i> Run Diagnostics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-chart-simple"></i> System Health Status
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="badge bg-success me-2"><i class="fas fa-check-circle"></i> Database: Connected</span>
+                        <span class="badge bg-success me-2"><i class="fas fa-check-circle"></i> Redis: Connected</span>
+                        <span class="badge bg-success"><i class="fas fa-check-circle"></i> AI Models: Loaded</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-info me-2"><i class="fas fa-video"></i> Webcam Service: Active</span>
+                        <span class="badge bg-info"><i class="fas fa-bell"></i> Alert Service: Active</span>
+                    </div>
+                    <div class="mt-3">
+                        <div class="small text-muted">Last Backup: {{ last_backup|default:"2024-01-15 03:00 AM" }}</div>
+                        <div class="small text-muted">Uptime: {{ uptime|default:"14 days, 6 hours" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Modal -->
+<div class="modal fade" id="backupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-database"></i> Database Backup</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will create a complete backup of the database including:</p>
+                <ul>
+                    <li>User accounts and profiles</li>
+                    <li>Session records and analytics</li>
+                    <li>Emotion and focus data</li>
+                    <li>System configurations and logs</li>
+                </ul>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Backup may take several minutes depending on database size.
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="includeMedia">
+                    <label class="form-check-label" for="includeMedia">
+                        Include media files (reports, profile pictures)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="performBackup()">
+                    <i class="fas fa-database"></i> Start Backup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restart Modal -->
+<div class="modal fade" id="restartModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Restart AI Services</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Restarting AI services will:</p>
+                <ul>
+                    <li>Reload emotion detection model</li>
+                    <li>Reset focus analysis engine</li>
+                    <li>Clear temporary processing queues</li>
+                </ul>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Active sessions will be temporarily interrupted.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="restartServices()">
+                    <i class="fas fa-sync-alt"></i> Restart Services
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Config Modal -->
+<div class="modal fade" id="editConfigModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Edit System Configuration</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="configForm">
+                    <div class="mb-3">
+                        <label class="form-label">Attention Threshold (%)</label>
+                        <input type="number" class="form-control" name="attention_threshold" value="70" min="0" max="100">
+                        <small class="text-muted">Minimum attention score to be considered "focused"</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Alert Cooldown (seconds)</label>
+                        <input type="number" class="form-control" name="alert_cooldown" value="30" min="5" max="300">
+                        <small class="text-muted">Time between same-type alert notifications</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Max Concurrent Sessions</label>
+                        <input type="number" class="form-control" name="max_sessions" value="50" min="1" max="500">
+                        <small class="text-muted">Maximum number of simultaneous sessions</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Frame Processing Interval (seconds)</label>
+                        <input type="number" class="form-control" name="frame_interval" value="1.0" step="0.1" min="0.5" max="5">
+                        <small class="text-muted">Time between frame analyses for real-time processing</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Low Memory Mode</label>
+                        <select class="form-select" name="low_memory">
+                            <option value="false">Disabled (Full features)</option>
+                            <option value="true">Enabled (Reduced memory usage)</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveConfig()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Performance Chart
+    const perfCtx = document.getElementById('performanceChart').getContext('2d');
+    const perfData = {
+        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+        datasets: [
+            {
+                label: 'Request Latency (ms)',
+                data: [120, 98, 245, 189, 210, 156],
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: 'Active Sessions',
+                data: [12, 8, 35, 42, 38, 25],
+                borderColor: '#17a2b8',
+                backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: 'API Calls (x100)',
+                data: [5, 3, 15, 22, 18, 10],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4
+            }
+        ]
+    };
+    
+    new Chart(perfCtx, {
+        type: 'line',
+        data: perfData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                y: { title: { display: true, text: 'Value' } },
+                x: { title: { display: true, text: 'Time (Hour)' } }
+            }
+        }
+    });
+    
+    // Real-time updates
+    function refreshSystemStats() {
+        fetch('/api/system-stats/')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('[data-stat="active_sessions"]').innerText = data.active_sessions;
+                document.querySelector('[data-stat="api_calls"]').innerText = data.api_calls_today;
+                // Update other stats
+            })
+            .catch(error => console.error('Error fetching stats:', error));
+    }
+    
+    function performBackup() {
+        const includeMedia = document.getElementById('includeMedia').checked;
+        showToast('Starting database backup...', 'info');
+        
+        fetch('/api/backup/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ include_media: includeMedia })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Backup completed successfully!', 'success');
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                showToast('Backup failed: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => showToast('Backup error: ' + error, 'danger'));
+    }
+    
+    function restartServices() {
+        showToast('Restarting AI services...', 'warning');
+        
+        fetch('/api/restart-services/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Services restarted successfully!', 'success');
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                showToast('Restart failed: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => showToast('Restart error: ' + error, 'danger'));
+    }
+    
+    function clearCache() {
+        if (confirm('Clear system cache? This may temporarily slow down the system.')) {
+            fetch('/api/clear-cache/', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Cache cleared successfully!', 'success');
+                    } else {
+                        showToast('Failed to clear cache', 'danger');
+                    }
+                });
+        }
+    }
+    
+    function runDiagnostics() {
+        showToast('Running system diagnostics...', 'info');
+        
+        fetch('/api/diagnostics/')
+            .then(response => response.json())
+            .then(data => {
+                let message = 'Diagnostics Results:\n';
+                message += `Database: ${data.database ? 'OK' : 'FAIL'}\n`;
+                message += `Redis: ${data.redis ? 'OK' : 'FAIL'}\n`;
+                message += `AI Models: ${data.ai_models ? 'OK' : 'FAIL'}\n`;
+                message += `Storage: ${data.storage_status}`;
+                alert(message);
+            });
+    }
+    
+    function saveConfig() {
+        const formData = new FormData(document.getElementById('configForm'));
+        const config = Object.fromEntries(formData.entries());
+        
+        fetch('/api/system-config/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Configuration saved successfully!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editConfigModal')).hide();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Failed to save configuration', 'danger');
+            }
+        });
+    }
+    
+    function clearLogs() {
+        if (confirm('Clear all system logs? This action cannot be undone.')) {
+            fetch('/api/clear-logs/', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Logs cleared successfully!', 'success');
+                        location.reload();
+                    }
+                });
+        }
+    }
+    
+    function downloadLogs() {
+        window.location.href = '/api/download-logs/';
+    }
+    
+    function showToast(message, type) {
+        const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        toastContainer.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    }
+    
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.position = 'fixed';
+        container.style.bottom = '20px';
+        container.style.right = '20px';
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+        return container;
+    }
+    
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+        if (!document.hidden) {
+            refreshSystemStats();
+        }
+    }, 30000);
+</script>
+{% endblock %}  

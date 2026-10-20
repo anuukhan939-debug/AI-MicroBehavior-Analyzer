@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between">
+            <h4>User Management</h4>
+            <a href="{% url 'core:add_user' %}" class="btn btn-light">+ Add User</a>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>Username</th><th>Email</th><th>Role</th><th>Active</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>{{ user.is_active|yesno:"Yes,No" }}</td>
+                        <td>
+                            <a href="{% url 'core:edit_user' user.id %}" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="{% url 'core:delete_user' user.id %}" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
