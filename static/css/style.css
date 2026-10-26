@@ -1,0 +1,135 @@
+/* Additional styles for dashboards */
+
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+
+.border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+}
+
+.border-left-info {
+    border-left: 4px solid #36b9cc !important;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-xs {
+    font-size: .7rem;
+}
+
+.font-weight-bold {
+    font-weight: 700 !important;
+}
+
+.shadow {
+    box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15) !important;
+}
+
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+/* Progress bar animations */
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+
+/* Card hover effects */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+
+/* Table row hover */
+.table-hover tbody tr:hover {
+    background-color: rgba(74, 144, 226, 0.05);
+    cursor: pointer;
+}
+
+/* Badge animations */
+.badge {
+    transition: all 0.2s ease;
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .btn {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+
+/* Custom scrollbar for logs */
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Custom Sky Green Button */
+ .btn-gradient-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        color: #fff;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .btn-gradient-success:hover {
+        background: linear-gradient(135deg, #1e7e34, #168f72);
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        color: #fff;
+    }
+    .btn-gradient-success i {
+        color: #fff;
+    }
+/*  Get Focus Tips */
+.btn-gradient-warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    border: none;
+    color: #fff;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+.btn-gradient-warning:hover {
+    background: linear-gradient(135deg, #e0a800, #e06b00);
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+}
+.btn-gradient-warning i {
+    color: #fff;
+}

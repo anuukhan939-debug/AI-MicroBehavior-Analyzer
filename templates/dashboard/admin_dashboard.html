@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+<!-- 🔥🔍 DEBUG: RAW DATA CHECK (yeh block add karo) 🔍🔥 -->
+<pre style="background:black; color:lime; padding:15px; margin:10px 0; border:3px solid red; white-space:pre-wrap; word-break:break-all;">
+Emotion Data: {{ emotion_dist|safe }}
+Daily Trends: {{ daily_trends|safe }}
+</pre>
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chalkboard-teacher"></i> Admin Dashboard</h2>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                Last {{ days }} days
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="?days=1">Last day</a></li>
+                <li><a class="dropdown-item" href="?days=7">Last 7 days</a></li>
+                <li><a class="dropdown-item" href="?days=30">Last 30 days</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-white-50">Active Sessions</h6>
+                            <h2 class="text-white">{{ stats.active_sessions }}</h2>
+                        </div>
+                        <i class="fas fa-video"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-white-50">Active Users</h6>
+                            <h2 class="text-white">{{ stats.active_users }}</h2>
+                        </div>
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-white-50">Total Sessions</h6>
+                            <h2 class="text-white">{{ stats.total_sessions }}</h2>
+                        </div>
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #dc3545, #e83e8c);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-white-50">Avg Attention</h6>
+                            <h2 class="text-white">{{ stats.avg_attention|floatformat:1 }}%</h2>
+                        </div>
+                        <i class="fas fa-eye"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie"></i> Emotion Distribution
+                </div>
+                <div class="card-body">
+                    <canvas id="emotionChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> Daily Attention Trend
+                </div>
+                <div class="card-body">
+                    <canvas id="trendChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Sessions -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <i class="fas fa-play-circle"></i> Active Sessions
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Duration</th>
+                            <th>Current Attention</th>
+                            <th>Current Emotion</th> 
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in active_sessions %}
+                        <tr>
+                            <td>{{ session.user.get_full_name|default:session.user.username }}</td>
+                            <td>{{ session.duration|floatformat:0 }} min</td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar {% if session.current_attention > 70 %}bg-success{% elif session.current_attention > 40 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         style="width: {{ session.current_attention }}%">
+                                        {{ session.current_attention|floatformat:0 }}%
+                                    </div>
+                                </div>
+                            </td>
+                             <td>
+                                {% if session.current_emotion %}
+                                    <span class="emotion-badge emotion-{{ session.current_emotion }}">
+                                        {{ session.current_emotion|title }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-success">Active</span></td>
+                           
+                            <td>
+                                <a href="{% url 'core:session_detail' session.session.id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No active sessions</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Alerts -->
+    <div class="card mt-4">
+        <div class="card-header bg-warning">
+            <i class="fas fa-bell"></i> Recent Alerts
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for alert in recent_alerts %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge {% if alert.priority == 'high' %}bg-danger{% elif alert.priority == 'medium' %}bg-warning{% else %}bg-info{% endif %} me-2">
+                                {{ alert.priority|upper }}
+                            </span>
+                            <strong>{{ alert.alert_type|title }}</strong>
+                            <p class="mb-0 small text-muted">{{ alert.message }}</p>
+                            <p class="mb-0 small text-primary mt-1">
+                                <i class="fas fa-user"></i> User: {{ alert.session.user.username }}
+                            </p>
+                        </div>
+                        <small>{{ alert.timestamp|timesince }} ago</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <!-- <div class="list-group">
+                {% for alert in recent_alerts %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge {% if alert.priority == 'high' %}bg-danger{% elif alert.priority == 'medium' %}bg-warning{% else %}bg-info{% endif %} me-2">
+                                {{ alert.priority|upper }}
+                            </span>
+                            <strong>{{ alert.alert_type|title }}</strong>
+                            <p class="mb-0 small text-muted">{{ alert.message }}</p>
+                        </div>
+                        <small>{{ alert.timestamp|timesince }} ago</small>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No recent alerts</p>
+                {% endfor %}
+            </div> -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // ========== EMOTION DISTRIBUTION CHART ==========
+    const emotionCanvas = document.getElementById('emotionChart');
+    if (emotionCanvas) {
+        const emotionCtx = emotionCanvas.getContext('2d');
+        const emotionLabels = [{% for item in emotion_dist %}'{{ item.emotion|title }}',{% endfor %}];
+        const emotionValues = [{% for item in emotion_dist %}{{ item.count }},{% endfor %}];
+        
+        if (emotionLabels.length > 0 && emotionValues.length > 0) {
+            new Chart(emotionCtx, {
+                type: 'pie',
+                data: {
+                    labels: emotionLabels,
+                    datasets: [{
+                        data: emotionValues,
+                        backgroundColor: ['#ffd93d', '#6c5ce7', '#ff7675', '#a29bfe', '#dfe6e9', '#55efc4', '#b2bec3']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        } else {
+            emotionCanvas.parentElement.innerHTML = '<p class="text-muted text-center">No emotion data available</p>';
+        }
+    }
+    
+    // ========== DAILY TREND CHART ==========
+    const trendCanvas = document.getElementById('trendChart');
+    if (trendCanvas) {
+        const trendCtx = trendCanvas.getContext('2d');
+        const trendLabels = [{% for trend in daily_trends %}'{{ trend.date }}',{% endfor %}];
+        const trendValues = [{% for trend in daily_trends %}{{ trend.avg_attention|default:0 }},{% endfor %}];
+        
+        if (trendLabels.length > 0 && trendValues.length > 0) {
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Average Attention Score',
+                        data: trendValues,
+                        borderColor: '#4a90e2',
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#4a90e2',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        tooltip: { callbacks: { label: (ctx) => ctx.raw + '%' } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, title: { display: true, text: 'Attention Score (%)' } },
+                        x: { title: { display: true, text: 'Date' } }
+                    }
+                }
+            });
+        } else {
+            trendCanvas.parentElement.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-line fa-2x text-muted mb-2 d-block"></i>
+                    <p class="text-muted">No daily trend data available</p>
+                </div>
+            `;
+        }
+    }
+</script>
+
+
+
+ <!-- scripts block close -->
+{% endblock %}
+<!-- content block close -->

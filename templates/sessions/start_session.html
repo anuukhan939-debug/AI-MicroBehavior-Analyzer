@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <i class="fas fa-play-circle fa-3x mb-2"></i>
+                    <h3 class="mb-0">Start New Session</h3>
+                    <p class="mb-0 mt-1">	Start tracking your focus and emotion</p>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <!-- Pre-session Checklist -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle"></i> <strong>Before starting the session:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Make sure your webcam is properly connected</li>
+                            <li>Sit in a well-lit area</li>
+                            <li>Sit straight in front of the camera</li>
+                            <li>Keep the background peaceful</li>
+                        </ul>
+                    </div>
+
+                    <form method="post" action="{% url 'core:start_session' %}">
+                        {% csrf_token %}
+                        
+                        <!-- Domain Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-tag"></i> Session Domain / Type
+                            </label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="domain" id="domainEducation" value="education" checked>
+                                        <label class="form-check-label" for="domainEducation">
+                                            <i class="fas fa-graduation-cap text-primary"></i>
+                                            <strong>Education</strong><br>
+                                            <small class="text-muted">Study, class, learning</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="domain" id="domainCorporate" value="corporate">
+                                        <label class="form-check-label" for="domainCorporate">
+                                            <i class="fas fa-briefcase text-success"></i>
+                                            <strong>Corporate</strong><br>
+                                            <small class="text-muted">Meeting, work, training</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="domain" id="domainHealthcare" value="healthcare">
+                                        <label class="form-check-label" for="domainHealthcare">
+                                            <i class="fas fa-heartbeat text-danger"></i>
+                                            <strong>Healthcare</strong><br>
+                                            <small class="text-muted">Therapy, counseling</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                                <!-- Analysis Mode Selection -->
+
+                        <div class="mb-3">
+                            <label for="analysis_mode" class="form-label">
+                                <i class="fas fa-sliders-h"></i> Analysis Mode
+                            </label>
+                            <select name="analysis_mode" id="analysis_mode" class="form-select">
+                                <option value="both">🔬 Focus + Emotion (Complete)</option>
+                                <option value="focus">👁️ Focus Only (Attention Score)</option>
+                                <option value="emotion">😊 Emotion Only (Facial Expression)</option>
+                            </select>
+                            <small class="text-muted">Choose what you want to track. Focus Only is faster.</small>
+                        </div>
+                        <!-- Session Goals -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-bullseye"></i> Session Goals (Optional)
+                            </label>
+                            <textarea class="form-control" name="goals" rows="2" 
+                                      placeholder="Misaal: Chapter 3 parhna hai, 50% focus maintain karna hai..."></textarea>
+                            <small class="text-muted">Write your goals so you can review them later</small>
+                        </div>
+
+                        <!-- Duration Setting -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-hourglass-half"></i> Estimated Duration
+                            </label>
+                            <select class="form-select" name="estimated_duration">
+                                <option value="30">30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="60" selected>60 minutes</option>
+                                <option value="90">90 minutes</option>
+                                <option value="120">120 minutes</option>
+                            </select>
+                        </div>
+
+                        <!-- Privacy Consent -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="privacyConsent" required>
+                            <label class="form-check-label" for="privacyConsent">
+                               I consent to my video being captured and my facial expressions and focus being analyzed. 
+                               I understand that the data is secure and will only be used for educational purposes.
+                            </label>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'core:dashboard' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="startSessionBtn" disabled>
+                                <i class="fas fa-play"></i> Start Session
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <i class="fas fa-lightbulb text-warning"></i>Session Tips
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <i class="fas fa-mobile-alt fa-2x text-primary mb-2 d-block"></i>
+                            <small>Keep phone away</small>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="fas fa-coffee fa-2x text-primary mb-2 d-block"></i
+                            <small>Keep water bottle nearby</small>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="fas fa-headphones fa-2x text-primary mb-2 d-block"></i>
+                            <small>Noise canceling headphones</small>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="fas fa-bed fa-2x text-primary mb-2 d-block"></i>
+                            <small>Get good sleep beforehand</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enable start button only when consent is checked
+    const consentCheckbox = document.getElementById('privacyConsent');
+    const startBtn = document.getElementById('startSessionBtn');
+    
+    consentCheckbox.addEventListener('change', function() {
+        startBtn.disabled = !this.checked;
+    });
+    
+    // Show warning if webcam not available
+    async function checkWebcam() {
+        try {
+            await navigator.mediaDevices.getUserMedia({ video: true });
+            console.log('Webcam available');
+        } catch (error) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning mt-3';
+            alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Warning: Webcam nahi mili. Yakeen karein ke webcam connect hai aur permissions di hui hain.';
+            document.querySelector('.card-body').prepend(alertDiv);
+        }
+    }
+    
+    checkWebcam();
+</script>
+{% endblock %}
